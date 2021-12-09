@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="ko">
+	<head>
+		<title>Diablo Immortal</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link  rel="stylesheet" href="../scss/type_b.css">
+		<style>
+            
+        </style>
+	</head>
+
+	<body>
+		
+		<section class="hero-wrap" id="hero-wrap"></section>
+		<div class="big-logo">
+			<img src="../img/logo_big.png" class="logo">
+			<!--
+			<img src="../img/b_headline.png" class="headline bright">
+			-->			
+		</div>
+
+		<section class="contents-wrap">
+			<div class="con-child-wrap con-1">
+				<img src="../img/b_con_1.png">
+			</div>
+		</section>
+
+		<video id="video-sample" style="display: none;" muted loop autoplay>
+			<source src="../video/test_sample.mp4" type='video/mp4'>
+		</video>
+
+		<span class="scroll-element">
+			<span class="trigger trigger-1"></span>
+			<span class="trigger trigger-2"></span>
+			<span class="trigger trigger-3"></span>
+		</span>
+	
+	<!--  -->
+	<script src="../js/gsap.min.js"></script>
+	<script src="../js/ScrollTrigger.min.js"></script>
+
+    <script type="module">
+
+        import * as THREE from '../build/three.module.js';
+
+        import { RoundedBoxGeometry } from './jsm/geometries/RoundedBoxGeometry.js';
+        import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+        import { RGBELoader } from './jsm/loaders/RGBELoader.js';
+        import { RoughnessMipmapper } from './jsm/utils/RoughnessMipmapper.js';
+        import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
+        import { RenderPass } from './jsm/postprocessing/RenderPass.js';
+        import { ShaderPass } from './jsm/postprocessing/ShaderPass.js';
+        import { UnrealBloomPass } from './jsm/postprocessing/UnrealBloomPass.js';
+        //import { CopyShader } from './jsm/shaders/CopyShader.js';
+        //import { RGBShiftShader } from './jsm/shaders/RGBShiftShader.js';
+
+        let heroScene;
+        let camera, renderer, scene, composer, mesh, iconOneStore, iconRig;
+        const mouse = new THREE.Vector2();
+        const target = new THREE.Vector2();
+        const windowHalf = new THREE.Vector2( window.innerWidth / 2, window.innerHeight / 2 );
+        const cameraRig = new THREE.Object3D();
+		const stoneRig = new THREE.Object3D();
+		const stoneGroupRig = new THREE.Object3D();
+		
+
+        init();
+		animate();
+
+        function init() {
+
+            const scene = new THREE.Scene();
+			camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.01, 100 );
+            camera.position.set( 0, 0, 3);
+            camera.lookAt(0,0,0);
+           			
+			// light
+			const light1 = new THREE.DirectionalLight( 0xffffff, 1 );
+			scene.add( light1 );
+
+			// Textures Loading
+			const textureLoader = new THREE.TextureLoader();
+
+			const bg1Texture = textureLoader.load("models/heroes.jpg");
+			const bg1Geometry = new THREE.PlaneGeometry(11, 5);
+			const bg1Material = new THREE.MeshBasicMaterial({ 
+				map: bg1Texture,
+				transparent: true,
+				opacity : 0.7 
+			});
+
+			const bg1Mesh = new THREE.Mesh(bg1Geometry, bg1Material);			
+			bg1Mesh.position.set(0, 0, -6);
+			scene.add(bg1Mesh);
+
+			const normalMapTexture = textureLoader.load("models/normal.jpg");
+
+			const hdrEquirect = new RGBELoader().load(
+				"models/empty_warehouse_01_2k.hdr",
+				//"models/diablo_1.hdr",
+					() => {
+					hdrEquirect.mapping = THREE.EquirectangularReflectionMapping;
+				}
+			);
+
+			const stoneMat = new THREE.MeshPhysicalMaterial({
+				color: 0xeb0000,
+				metalness: 0,
+				roughness: 0,
+				transmission: 1,
+				ior: 1.3,
+				reflectivity: 0.8,
+				thickness: 2.5,
+				envMap: hdrEquirect,
+				envMapIntensity: 0.5,
+				//clearcoat: 1,
+				//clearcoatRoughness: 0,
+				//normalScale: new THREE.Vector2(0.1),
+				//normalMap: normalMapTexture,
+				clearcoatNormalMap: normalMapTexture,
+				clearcoatNormalScale: new THREE.Vector2(0.5),
+				emissive: 0x130101,
+				//transparent: true,
+				//opacity : 0.8 
+			});
+
+			let mesh = null;
+            const loaderStone = new GLTFLoader().setPath( 'models/' );
+            loaderStone.load( 'world_stone.glb', function ( gltf ) {
+				const stoneMesh = gltf.scene.children.find((mesh) => mesh.name === "WorldStone");
+				const stoneGeometry = stoneMesh.geometry.clone();
+				mesh = new THREE.Mesh(stoneGeometry, stoneMat);
+				mesh.scale.set(0.7, 0.7, 0.7);
+				stoneRig.add(mesh);
+                render();
+
+				// Discard the loaded model
+				gltf.scene.children.forEach((child) => {
+					child.geometry.dispose();
+					child.material.dispose();
+				});
+            });
+
+			stoneRig.position.x = -2.2;
+			stoneRig.position.z = -4;
+            scene.add(stoneRig);
+			
+			//---
+			
+			let stoneGroupObject = null;
+			const loaderStoneGroup = new GLTFLoader().setPath( 'models/' );
+			loaderStoneGroup.load( 'world_stone_group.glb', function ( gltf ) {
+				const stoneGroupMesh = gltf.scene.children.find((mesh) => mesh.name === "stone_group");
+				const stoneGroupGeometry = stoneGroupMesh.geometry.clone();
+				stoneGroupObject = new THREE.Mesh(stoneGroupGeometry, stoneMat);
+				
+				stoneGroupRig.add(stoneGroupObject);
+                render();
+            });
+			stoneGroupRig.position.x = 0.8;
+			stoneGroupRig.position.z = 1;
+			scene.add(stoneGroupRig);
+
+			//--------------------------
+            
+            renderer = new THREE.WebGLRenderer( { antialias: false } );
+            renderer.setPixelRatio( window.devicePixelRatio*1.5 );
+            renderer.setSize( window.innerWidth, window.innerHeight );
+			renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.5;
+			let stageColor = 0x000000 ; 
+            renderer.setClearColor( stageColor, 1);
+			
+            heroScene = document.getElementById("hero-wrap");
+            heroScene.appendChild(renderer.domElement);
+
+            composer = new EffectComposer( renderer );
+			composer.addPass( new RenderPass( scene, camera ) );
+			
+			const bloomPass = new UnrealBloomPass(
+				new THREE.Vector2(window.innerWidth, window.innerHeight), 0.1, 0.1, 0.1
+			);
+			bloomPass.strength = 1.5;
+			bloomPass.radius = 1.5;
+			composer.addPass(bloomPass);
+			
+			
+            window.addEventListener( 'resize', onWindowResize );
+            document.addEventListener( 'mousemove', onMouseMove );
+
+			// ScrollTrigger ------------------------------
+			//---------------------------------------------
+
+			gsap.registerPlugin(ScrollTrigger);
+			let scene1 = gsap.timeline();
+			let tlStone = gsap.timeline();
+			scene1
+			.add('start')
+			.to(stoneRig.position, { x: 1.5, z: -1, duration: 3})
+			.to(stoneRig.rotation, { x: 6, y: 1, duration: 3}, 'start')
+			.to(stoneGroupRig.position, { x: -0.8, z: 1, duration: 3}, 'start')
+			.to(stoneGroupRig.rotation, { x: 6, y: 1, duration: 3}, 'start')
+			.to(bg1Material, {opacity: 0.0, duration: 3}, 'start')
+			.to(bg1Mesh.position, {z: -8, duration:3 }, 'start');
+			ScrollTrigger.create({
+				animation: scene1,
+				trigger: ".trigger-1",
+				start: "bottom bottom",
+				end : "bottom 50%",
+				scrub: true
+			});
+
+			tlStone
+			.to(stoneRig.position, { 
+				y: 0.03, duration:1,
+				repeat:-1, yoyo:true, 
+				ease:Power0.easeNone 
+			 });
+
+			let tlStoneGroup = gsap.timeline();
+			tlStoneGroup
+			.to(stoneGroupRig.position, { 
+				y: 0.02, duration: 1, 
+				repeat:-1, yoyo:true, 
+				ease:Power0.easeNone 
+			});
+
+        } // init end -----------------------
+
+        function onMouseMove( event ) {
+            mouse.x = ( event.clientX - windowHalf.x );
+            mouse.y = ( event.clientY - windowHalf.x );
+        }
+
+        function onWindowResize() {
+            const width = window.innerWidth;
+			const height = window.innerHeight;
+
+			camera.aspect = width / height;
+			camera.updateProjectionMatrix();
+
+			renderer.setSize( width, height );
+			composer.setSize( width, height );
+            
+            render();
+        }
+
+		function animate(){
+			requestAnimationFrame(animate);
+			render();
+		}
+        function render() {
+
+            target.x = ( 1 - mouse.x ) * -0.002;
+            target.y = ( 1 - mouse.y ) * -0.0004;
+            
+            cameraRig.rotation.x += 0.05 * ( target.y - stoneRig.rotation.x );
+            cameraRig.rotation.y += 0.05 * ( target.x - stoneRig.rotation.y );
+			stoneRig.rotation.z += 0.0003;
+			stoneRig.rotation.y += 0.001;
+            
+            composer.render();
+
+        }
+
+    </script>
+		
+		
+	</body>
+</html>

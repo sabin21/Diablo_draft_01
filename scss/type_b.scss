@@ -1,0 +1,47 @@
+
+@import "./common.scss";
+
+body {
+    overflow-x: hidden; font-family: 'Mark Pro Heavy', sans-serif;
+    background-color: #000;
+}
+
+.hero-wrap{
+    position: fixed; width: 100%; max-width: 2560px; 
+    height: 100vh; min-height: 640px;
+    overflow: hidden; margin: 0 auto;        
+}
+.big-logo {
+    position: absolute; width: 100%; margin: auto;
+    left:0; right:0; top: 200px; display: flex; flex-direction: column;
+    .logo { position: absolute; width: 380px; margin: auto;
+        left:0; right:0; }
+    .headline {
+        position: absolute; width: 340px; bottom:-440px; margin: auto;
+        left:0; right:0;
+        &.bright { 
+            filter: brightness(10) drop-shadow(0px 0px 10px #000000);    
+        }
+    }
+}
+.contents-wrap {
+    position: absolute; width: 1600px; margin: 0 auto; left:0; right:0;
+    display: flex; flex-direction: column;
+    top: 100vh;
+    .con-child-wrap {
+        position: absolute; width: 1200px; left: 0; right:0; margin:auto;
+        &.con-1 {
+            text-align: center;
+        }
+    }
+}
+.scroll-element {
+    display: block; position: absolute; width:100px; height: 450vh;
+    right:0; top:0; z-index: 100; display: flex; flex-direction: column;
+    .trigger {
+        display: block; width:100%;
+        position: relative; height: 70vh; min-height: 640px;
+        margin-top: 30vh; 
+        border-top: 1px solid red; border-bottom: 1px solid yellow;
+    }
+}
