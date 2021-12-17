@@ -345,3 +345,11 @@ details {
 template {
   display: none;
 }
+
+@font-face {
+  font-family: 'kodia';
+  font-style: normal;
+  font-weight: 400;
+  src: url(../fonts/kodia.ttf);
+  src: url(../fonts/kodia.woff);
+}
